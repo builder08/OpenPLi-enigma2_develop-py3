@@ -1,4 +1,4 @@
-AC_INIT([enigma2],[4],[forum@openpli.org])
+AC_INIT([enigma2],[5],[https://gisclub.fun])
 AM_INIT_AUTOMAKE([dist-bzip2 no-define tar-pax -Wno-portability])
 AC_CONFIG_HEADERS([enigma2_config.h])
 
@@ -29,8 +29,12 @@ TUXBOX_APPS_DVB
 AM_CONDITIONAL(HAVE_GIT_DIR, test -d "$srcdir/.git")
 AM_CONDITIONAL(HAVE_FAKE_GIT_DIR, test -f "$srcdir/.git/last_commit_info")
 
-dnl versions of plugins-base
-PKG_CHECK_MODULES(TUXTXT, tuxbox-tuxtxt)
+dnl versions of gstreamer and plugins-base
+AC_ARG_WITH(gstversion,
+	AS_HELP_STRING([--with-gstversion],[use gstreamer version (major.minor)]),
+	[GST_MAJORMINOR=$withval],[GST_MAJORMINOR=0.10])
+
+PKG_CHECK_MODULES(GSTREAMER, gstreamer-$GST_MAJORMINOR gstreamer-pbutils-$GST_MAJORMINOR)
 PKG_CHECK_MODULES(BASE, [freetype2 fribidi glib-2.0 libdvbsi++ libpng libxml-2.0 sigc++-3.0 libssl libcrypto])
 PKG_CHECK_MODULES(LIBDDVD, libdreamdvd, HAVE_LIBDDVD="yes", HAVE_LIBDDVD="no")
 AM_CONDITIONAL(HAVE_LIBDDVD, test "$HAVE_LIBDDVD" = "yes")
@@ -46,7 +50,7 @@ AC_SUBST(LIBGIF_LIBS)
 
 AC_ARG_WITH(crashlogemail,
 	[  --with-crashlogemail=crash log email address],
-	[CRASHLOGEMAIL="$withval"],[CRASHLOGEMAIL="the OpenPLi forum"])
+	[CRASHLOGEMAIL="$withval"],[CRASHLOGEMAIL="the GISCLUB forum"])
 AC_SUBST(CRASHLOGEMAIL)
 AC_DEFINE_UNQUOTED(CRASH_EMAILADDR,"$CRASHLOGEMAIL",[crash log email address])
 
@@ -56,8 +60,53 @@ AC_ARG_WITH(boxtype,
 AC_SUBST(BOXTYPE)
 AC_DEFINE_UNQUOTED(BOXTYPE,"$BOXTYPE",[box type])
 
+AC_ARG_WITH(machinebuild,
+	[  --with-machinebuild=NAME machine build [[none,gbipbox,gbquad...]]],
+	[MACHINEBUILD="$withval"],[MACHINEBUILD="gbipbox"])
+AC_SUBST(MACHINEBUILD)
+AC_DEFINE_UNQUOTED(MACHINEBUILD,"$MACHINEBUILD",[machine build])
+
+AC_ARG_WITH(distro,
+	[  --with-distro=NAME distro name [[openvix,openaaf,...]]],
+	[DISTRO="$withval"],[DISTRO="openaaf"])
+AC_SUBST(DISTRO)
+AC_DEFINE_UNQUOTED(DISTRO,"$DISTRO",[distro name])
+
+AC_ARG_WITH(machinebrand,
+	[  --with-machinebrand=NAME brand name [[Vu,Xtrend,...]]],
+	[MACHINE_BRAND="$withval"],[MACHINE_BRAND="Vu+"])
+AC_SUBST(MACHINE_BRAND)
+AC_DEFINE_UNQUOTED(MACHINE_BRAND,"$MACHINE_BRAND",[machine brand])
+
+AC_ARG_WITH(machinename,
+	[  --with-machinename=NAME machine name [[Solo,Ultimo,...]]],
+	[MACHINE_NAME="$withval"],[MACHINE_NAME="Ultimo"])
+AC_SUBST(MACHINE_NAME)
+AC_DEFINE_UNQUOTED(MACHINE_NAME,"$MACHINE_NAME",[machine name])
+
+AC_ARG_WITH(imageversion,
+	[  --with-imageversion=NAME version number [[2.0]]],
+	[IMAGEVERSION="$withval"],[IMAGEVERSION=""])
+AC_SUBST(IMAGEVERSION)
+AC_DEFINE_UNQUOTED(IMAGEVERSION,"$IMAGEVERSION",[version number])
+
+AC_ARG_WITH(imagebuild,
+	[  --with-imagebuild=NAME build number [[5]]],
+	[IMAGEBUILD="$withval"],[IMAGEBUILD=""])
+AC_SUBST(IMAGEBUILD)
+AC_DEFINE_UNQUOTED(IMAGEBUILD,"$IMAGEBUILD",[build number])
+
+AC_ARG_WITH(driverdate,
+	[  --with-driverdate=NAME driver date [[5]]],
+	[DRIVERDATE="$withval"],[DRIVERDATE=""])
+AC_SUBST(DRIVERDATE)
+AC_DEFINE_UNQUOTED(DRIVERDATE,"$DRIVERDATE",[driver date])
+
 AM_CONDITIONAL(DREAMBOX, test `echo "$BOXTYPE" | cut -b 1-2` == "dm")
 AM_CONDITIONAL(HAVE_TEMPFANCONTROL, test "$BOXTYPE" == dm8000 -o "$BOXTYPE" == dm800se -o "$BOXTYPE" == dm500hd)
+AM_CONDITIONAL(GIGABLUE, test `echo "$BOXTYPE" | cut -b 1-2` == "gb")
+AM_CONDITIONAL(GBIPBOX, test "$MACHINEBUILD" == gbipbox)
+
 if test `echo "$BOXTYPE" | cut -b 1-2` == "dm"; then
 	AC_DEFINE(DREAMBOX, 1, [Dreambox hardware])
 	AC_DEFINE(KEY_PLAY_ACTUALLY_IS_KEY_PLAYPAUSE, 1,[define when rc sends a KEY_PLAY event for its KEY_PLAYPAUSE key])
@@ -79,6 +128,94 @@ AC_ARG_WITH(7segment,
 	[[TEXTSKIN="default"]]
 )
 AC_SUBST(TEXTSKIN)
+
+AC_ARG_WITH(colorlcd220,
+	AC_HELP_STRING([--with-colorlcd220], [use 220x176 16bpp color display, yes or no]),
+	[[withcolorlcd220=$withval]],
+	[[withcolorlcd220=no]]
+)
+if test x"$withcolorlcd220" != xno ; then
+	AC_DEFINE(HAVE_COLORLCD220, 1,[Define when using a 220x176 color display device])
+fi
+AM_CONDITIONAL(HAVE_COLORLCD220, test x"$withcolorlcd220" != xno)
+
+AC_ARG_WITH(colorlcd400,
+	AC_HELP_STRING([--with-colorlcd400], [use 400x240 16bpp color display, yes or no]),
+	[[withcolorlcd400=$withval]],
+	[[withcolorlcd400=no]]
+)
+if test x"$withcolorlcd400" != xno ; then
+	AC_DEFINE(HAVE_COLORLCD400, 1,[Define when using a 400x240 color display device])
+fi
+
+AM_CONDITIONAL(HAVE_COLORLCD400, test x"$withcolorlcd400" != xno)
+
+AC_ARG_WITH(bwlcd255,
+	AC_HELP_STRING([--with-bwlcd255], [use 255x64 1bpp black and white display, yes or no]),
+	[[withbwlcd255=$withval]],
+	[[withbwlcd255=no]]
+)
+if test x"$withbwlcd255" != xno ; then
+	AC_DEFINE(HAVE_BWLCD255, 1,[Define when using a 255x64 black and white display device])
+fi
+
+AM_CONDITIONAL(HAVE_BWLCD255, test x"$withbwlcd255" != xno)
+
+if test `echo "$BOXTYPE" | cut -b 1-2` == "vu"; then
+	AC_DEFINE(FORCE_NO_BLENDING_ACCELERATION, 1,[define when the framebuffer acceleration does not have alphablending support, though the autodetection might indicate that it does])
+	AC_DEFINE(FORCE_ADVANCED_REMOTE, 1,[define to fixup the input device identification when the remote control is actually an 'advanced' remote (with play/forward/rewind keys)])
+fi
+
+#if test `echo "$BOXTYPE" | cut -b 1-2` == "gb"; then
+if test "$BOXTYPE" == "gb800solo" -o "$BOXTYPE" == "gb7325" ; then
+	AC_DEFINE(KEY_PLAY_ACTUALLY_IS_KEY_PLAYPAUSE, 1,[define when rc sends a KEY_PLAY event for its KEY_PLAYPAUSE key])
+	AC_DEFINE(KEY_GUIDE_TO_KEY_EPG, 1,[define when rc sends a KEY_HELP event for its KEY_EPG key])
+	AC_DEFINE(KEY_F2_TO_KEY_F6, 1,[define when rc sends a KEY_F2 event for its KEY_F6 key])
+	AC_DEFINE(KEY_SCREEN_TO_KEY_MODE, 1,[define when rc sends a KEY_MODE event for its KEY_ASPECT key])
+	AC_DEFINE(LCD_COLOR_BITORDER_RGB565, 1,[define if lcd uses RGB565 bitorder])
+fi
+
+if test "$BOXTYPE" == "gb7358" -o "$BOXTYPE" == "gb7362" -o "$BOXTYPE" == "gb73625" -o "$BOXTYPE" == "gb7356" ; then
+	AC_DEFINE(KEY_PLAY_ACTUALLY_IS_KEY_PLAYPAUSE, 1,[define when rc sends a KEY_PLAY event for its KEY_PLAYPAUSE key])
+	AC_DEFINE(KEY_GUIDE_TO_KEY_EPG, 1,[define when rc sends a KEY_HELP event for its KEY_EPG key])
+	AC_DEFINE(KEY_F2_TO_KEY_F6, 1,[define when rc sends a KEY_F2 event for its KEY_F6 key])
+	AC_DEFINE(KEY_SCREEN_TO_KEY_MODE, 1,[define when rc sends a KEY_MODE event for its KEY_ASPECT key])
+fi
+
+if test "$BOXTYPE" == "gb7252"; then
+	AC_DEFINE(KEY_PLAY_ACTUALLY_IS_KEY_PLAYPAUSE, 1,[define when rc sends a KEY_PLAY event for its KEY_PLAYPAUSE key])
+	AC_DEFINE(KEY_GUIDE_TO_KEY_EPG, 1,[define when rc sends a KEY_HELP event for its KEY_EPG key])
+#	AC_DEFINE(KEY_F1_TO_KEY_F6, 1,[define when rc sends a KEY_F1 event for its KEY_F6 key])
+#	AC_DEFINE(KEY_F2_TO_KEY_AUX, 1,[define when rc sends a KEY_F2 event for its KEY_AUX key])
+	AC_DEFINE(KEY_CONTEXT_MENU_TO_KEY_AUX, 1,[define when rc sends a KEY_CONTEXT_MENU event for its HDMIIN functionality])
+	AC_DEFINE(KEY_SCREEN_TO_KEY_MODE, 1,[define when rc sends a KEY_MODE event for its KEY_ASPECT key])
+fi
+
+if test "$BOXTYPE" == "gb72604"; then
+	AC_DEFINE(KEY_PLAY_ACTUALLY_IS_KEY_PLAYPAUSE, 1,[define when rc sends a KEY_PLAY event for its KEY_PLAYPAUSE key])
+	AC_DEFINE(KEY_GUIDE_TO_KEY_EPG, 1,[define when rc sends a KEY_HELP event for its KEY_EPG key])
+#	AC_DEFINE(KEY_F1_TO_KEY_F6, 1,[define when rc sends a KEY_F1 event for its KEY_F6 key])
+#	AC_DEFINE(KEY_F2_TO_KEY_AUX, 1,[define when rc sends a KEY_F2 event for its KEY_AUX key])
+	AC_DEFINE(KEY_CONTEXT_MENU_TO_KEY_AUX, 1,[define when rc sends a KEY_CONTEXT_MENU event for its HDMIIN functionality])
+	AC_DEFINE(KEY_SCREEN_TO_KEY_MODE, 1,[define when rc sends a KEY_MODE event for its KEY_ASPECT key])
+fi
+
+AC_ARG_WITH(gigabluelcd,
+	AC_HELP_STRING([--with-gigabluelcd], [use 220x176 16bpp color display, yes or no]),
+	[[withgigabluelcd=$withval]],
+	[[withgigabluelcd=no]]
+)
+if test x"$withgigabluelcd" != xno ; then
+	AC_DEFINE(HAVE_GIGABLUELCD, 1,[Define when using a 220x176 color display device])
+fi
+AM_CONDITIONAL(HAVE_GIGABLUELCD, test x"$withgigabluelcd" != xno)
+
+if test "$BOXTYPE" == "gbmv200"; then
+	AC_DEFINE(HAVE_HISILICON, 1,[define add HISILICON chip])
+	AC_DEFINE(CONFIG_HISILICON_FB, 1,[define add HISILICON framebuffer blit])
+	AC_DEFINE(FORCE_ALPHABLENDING_ACCELERATION, 1,[define when the framebuffer acceleration has alphablending support, but detection slow down all])
+	AC_DEFINE(VMSG_TYPE2, 1,[define vtuner_message type 2])
+fi
 
 if test `echo "$BOXTYPE" | cut -b 1-7` == "mbmicro"; then
 	AC_DEFINE(FORCE_NO_BLENDING_ACCELERATION, 1,[define when the framebuffer acceleration does not have alphablending support, though the autodetection might indicate that it does])
